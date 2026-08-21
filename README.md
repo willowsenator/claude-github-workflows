@@ -80,10 +80,19 @@ gh api repos/anthropics/claude-code-action/commits/v1 --jq '.sha'
 Use `repos/OWNER/REPO/commits/TAG` rather than the refs API: most of these tags are *annotated*, so
 `git/matching-refs` returns the tag object's SHA, and a `uses:` pin needs the commit it points at.
 
-To have this maintained for you, add `.github/dependabot.yml` with the `github-actions` ecosystem —
-Dependabot rewrites pinned SHAs and keeps the version comment in sync. Note that `pr-review.yml`
-skips bot-authored pull requests, so those updates arrive unreviewed by Claude, which is the
-intended behaviour.
+You rarely have to. `.github/dependabot.yml` ships with this template and does it for you: weekly,
+grouped into a single pull request, rewriting the pinned SHA and the trailing version comment
+together. The commands above are for the times you want to bump something now rather than wait.
+
+Two consequences of that file being here:
+
+- **Dependabot's pull requests are not reviewed by Claude.** `pr-review.yml` skips bot-authored pull
+  requests. That is intended — a SHA bump is a diff Claude has nothing useful to say about — but it
+  does mean nothing automated reads them. Merge them yourself.
+- **Only the `github-actions` ecosystem is declared.** A repo created from this template that also
+  has an `npm`, `pip` or `cargo` manifest needs its own `updates:` entry added. Declaring an
+  ecosystem whose manifest is absent is a silent no-op rather than an error, so nothing breaks
+  either way.
 
 ## Does this fit my project?
 

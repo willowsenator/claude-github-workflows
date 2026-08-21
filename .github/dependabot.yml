@@ -1,0 +1,19 @@
+version: 2
+
+# The workflows pin both actions to commit SHAs, which a mutable tag cannot outrun — and which
+# nothing moves on its own. This is what moves them: Dependabot rewrites the pinned SHA and keeps
+# the trailing version comment in sync.
+#
+# Only the github-actions ecosystem is declared. Add others when the repo that uses this template
+# actually has a manifest for them; a directory with no manifest is a silent no-op, not an error.
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # One pull request for all action bumps rather than one per action.
+    groups:
+      actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
