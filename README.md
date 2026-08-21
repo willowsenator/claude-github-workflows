@@ -63,6 +63,27 @@ All three are read-only against the repository. Their only writes are labels and
   permissions in these files as narrow as they are.
 - **Concurrency.** Rapid edits to one issue, or several pushes to one pull request, supersede each
   other instead of piling up runs. Mention replies queue rather than cancel.
+- **Actions are pinned to commit SHAs**, not tags, with the human-readable version in a trailing
+  comment. A tag is mutable: whoever controls it can repoint `v1` at new code, which would then run
+  with `issues: write` and your Claude token. A SHA cannot be repointed. The cost is that pins do
+  not move on their own — see below.
+
+## Updating the pinned actions
+
+Resolve a tag to its commit and replace both the SHA and the trailing comment:
+
+```bash
+gh api repos/actions/checkout/commits/v7 --jq '.sha'
+gh api repos/anthropics/claude-code-action/commits/v1 --jq '.sha'
+```
+
+Use `repos/OWNER/REPO/commits/TAG` rather than the refs API: most of these tags are *annotated*, so
+`git/matching-refs` returns the tag object's SHA, and a `uses:` pin needs the commit it points at.
+
+To have this maintained for you, add `.github/dependabot.yml` with the `github-actions` ecosystem —
+Dependabot rewrites pinned SHAs and keeps the version comment in sync. Note that `pr-review.yml`
+skips bot-authored pull requests, so those updates arrive unreviewed by Claude, which is the
+intended behaviour.
 
 ## Does this fit my project?
 
