@@ -55,7 +55,8 @@ All three are read-only against the repository. Their only writes are labels and
   after the review checks whether the marker comment's timestamp actually moved and fails the job
   loudly if it did not, rather than reporting a silent pass on a run that reviewed nothing. A pull
   request that edits `pr-review.yml` itself will always fail this check (GitHub's own
-  workflow-validation guard skips the review step there) — see the comment above that step.
+  workflow-validation guard skips the review step there) — see the comment above the verification
+  step in that file.
 - **Bots are skipped.** Issues, pull requests and comments authored by bots never trigger a run.
   Dependabot and Renovate pull requests are therefore not reviewed; drop the `user.type != 'Bot'`
   condition in `pr-review.yml` if you want them to be.
