@@ -28,6 +28,18 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
+      # This action runs in "agent mode" (a raw prompt, not direct_prompt), which
+      # bypasses its own built-in sticky-comment tracking entirely — posting or
+      # editing the marker comment is purely the model choosing to run the `gh`
+      # command in step 5 below, with no structural guarantee it does. A run has
+      # been observed to finish "successfully" (no error, a normal turn count)
+      # without ever touching the comment, which reads as a passing check while
+      # silently reviewing nothing. The timestamp captured here lets the
+      # verification step after Claude runs tell that case apart from a real post.
+      - name: Record review start time
+        id: review_start
+        run: echo "epoch=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Review pull request
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         env:
@@ -130,5 +142,38 @@ jobs:
                If two or more marked comments somehow exist, edit the newest and leave the rest
                alone. Post a fresh comment only when no marked comment is present:
                  gh pr comment ${{ github.event.pull_request.number }} --body '<new body>'
+
+               Step 5 is the point of this run — a turn that ends without executing one of the
+               two commands above has not reviewed anything, whatever conclusion you reached
+               internally. "Nothing blocking" or "no change since the last review" is a valid
+               conclusion, but it still has to be the body you post or edit; it is never a reason
+               to skip the write. The step after this one checks whether the marker comment
+               actually changed and fails the job if it did not.
           claude_args: |
             --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/:*)"
+
+      # Defense in depth for the gap described above: never trust that the model's
+      # own "success" means it actually posted anything. If the marker comment's
+      # updated_at predates this run's start, the review step ran but never wrote
+      # its conclusion, and the job fails loudly instead of reporting a false pass.
+      - name: Verify the review comment was actually written
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          START_EPOCH: ${{ steps.review_start.outputs.epoch }}
+        run: |
+          set -euo pipefail
+          latest=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            -q '[.[] | select(.body | startswith("<!-- claude-pr-review -->"))] | sort_by(.updated_at) | last')
+
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "::error::No claude-pr-review comment exists after the review step ran — it never posted one."
+            exit 1
+          fi
+
+          updated_epoch=$(date -u -d "$(echo "$latest" | jq -r '.updated_at')" +%s)
+          if [ "$updated_epoch" -lt "$START_EPOCH" ]; then
+            echo "::error::The claude-pr-review comment predates this run (last touched $(echo "$latest" | jq -r '.updated_at')) — the review step completed without writing its conclusion for this push. Check the job log for what it actually did."
+            exit 1
+          fi
