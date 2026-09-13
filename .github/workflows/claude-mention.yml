@@ -112,5 +112,10 @@ jobs:
                  on the PR's Conversation tab, disconnected from the code line the question was
                  actually about. Use the "Comment id" given above:
                    gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/${{ github.event.comment.id }}/replies -f body='<reply>'
+
+                 This endpoint only accepts the id of a top-level review comment, not a reply to
+                 one — if the mention itself was inside a reply, this call can 422. If it fails,
+                 fall back to a normal top-level PR comment instead of losing the answer:
+                   gh pr comment ${{ github.event.pull_request.number }} --body '<reply>'
           claude_args: |
-            --allowedTools "Bash(gh issue view:*),Bash(gh pr diff:*),Bash(gh issue comment:*),Bash(gh api --method POST repos/${{ github.repository }}/pulls/:*)"
+            --allowedTools "Bash(gh issue view:*),Bash(gh pr diff:*),Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/:*)"
