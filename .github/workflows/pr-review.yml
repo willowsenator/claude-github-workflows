@@ -148,8 +148,17 @@ jobs:
                two commands above has not reviewed anything, whatever conclusion you reached
                internally. "Nothing blocking" or "no change since the last review" is a valid
                conclusion, but it still has to be the body you post or edit; it is never a reason
-               to skip the write. The step after this one checks whether the marker comment
-               actually changed and fails the job if it did not.
+               to skip the write.
+
+               This applies even when the marked comment you fetched in step 1 already says
+               exactly what you would write. "The existing comment already reflects my
+               conclusion, so there is nothing to change" is the single most common reason this
+               step gets skipped, and it is wrong: this run is a distinct execution reviewing a
+               distinct diff, and the step after this one checks this run's timestamp against
+               the marker comment's, not its content. A comment that reads correctly but was
+               last touched by a previous run still fails that check. If your conclusion is
+               unchanged, execute the SAME edit command with that unchanged conclusion as the
+               body anyway — a no-op-looking write is not a reason to skip the write.
           claude_args: |
             --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/:*)"
 
