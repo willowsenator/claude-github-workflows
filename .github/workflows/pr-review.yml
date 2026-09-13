@@ -35,7 +35,8 @@ jobs:
       # been observed to finish "successfully" (no error, a normal turn count)
       # without ever touching the comment, which reads as a passing check while
       # silently reviewing nothing. The timestamp captured here lets the
-      # verification step after Claude runs tell that case apart from a real post.
+      # verification step after Claude runs (see its own comment below) tell
+      # that case apart from a real post.
       - name: Record review start time
         id: review_start
         run: echo "epoch=$(date -u +%s)" >> "$GITHUB_OUTPUT"
@@ -156,6 +157,16 @@ jobs:
       # own "success" means it actually posted anything. If the marker comment's
       # updated_at predates this run's start, the review step ran but never wrote
       # its conclusion, and the job fails loudly instead of reporting a false pass.
+      #
+      # KNOWN CAVEAT: a PR that edits THIS FILE will always fail here, on every
+      # push, and that is not a bug to chase. GitHub's own workflow-validation
+      # guard refuses to run a pull_request-triggered step that exchanges an OIDC
+      # token (which claude-code-action does) using a workflow file that differs
+      # from the default branch's copy — so "Review pull request" above is
+      # silently skipped entirely, no comment is ever attempted, and this step
+      # correctly reports that nothing was posted. Review a change to this file
+      # by reading the diff, the way any change that can't review itself gets
+      # reviewed; the check starts working again once this file matches main.
       - name: Verify the review comment was actually written
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -172,8 +183,9 @@ jobs:
             exit 1
           fi
 
-          updated_epoch=$(date -u -d "$(echo "$latest" | jq -r '.updated_at')" +%s)
+          updated_at=$(echo "$latest" | jq -r '.updated_at')
+          updated_epoch=$(date -u -d "$updated_at" +%s)
           if [ "$updated_epoch" -lt "$START_EPOCH" ]; then
-            echo "::error::The claude-pr-review comment predates this run (last touched $(echo "$latest" | jq -r '.updated_at')) — the review step completed without writing its conclusion for this push. Check the job log for what it actually did."
+            echo "::error::The claude-pr-review comment predates this run (last touched $updated_at) — the review step completed without writing its conclusion for this push. Check the job log for what it actually did."
             exit 1
           fi
