@@ -124,4 +124,4 @@ jobs:
                alone. Post a fresh comment only when no marked comment is present:
                  gh issue comment ${{ github.event.issue.number }} --body '<new body>'
           claude_args: |
-            --allowedTools "Bash(gh issue view:*),Bash(gh label list),Bash(gh search issues:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/:*)"
+            --allowedTools "Bash(gh issue view:*),Bash(gh label list),Bash(gh search issues:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/*)"

@@ -118,4 +118,4 @@ jobs:
                  fall back to a normal top-level PR comment instead of losing the answer:
                    gh pr comment ${{ github.event.pull_request.number }} --body '<reply>'
           claude_args: |
-            --allowedTools "Bash(gh issue view:*),Bash(gh pr diff:*),Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/:*)"
+            --allowedTools "Bash(gh issue view:*),Bash(gh pr diff:*),Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/*)"

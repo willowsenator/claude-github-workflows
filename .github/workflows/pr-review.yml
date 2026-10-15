@@ -160,7 +160,7 @@ jobs:
                unchanged, execute the SAME edit command with that unchanged conclusion as the
                body anyway — a no-op-looking write is not a reason to skip the write.
           claude_args: |
-            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/:*)"
+            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api --method PATCH repos/${{ github.repository }}/issues/comments/*)"
 
       # Defense in depth for the gap described above: never trust that the model's
       # own "success" means it actually posted anything. If the marker comment's
