@@ -42,7 +42,7 @@ jobs:
         run: echo "epoch=$(date -u +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Review pull request
-        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1
+        uses: anthropics/claude-code-action@1d6de8cb0c237e7c15e9e1bdf973826ebae490cc # v1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
